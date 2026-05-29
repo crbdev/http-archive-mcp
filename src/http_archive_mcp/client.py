@@ -23,7 +23,9 @@ from typing import Any
 import httpx
 
 API_BASE = "https://cdn.httparchive.org/v1"
-DEFAULT_TIMEOUT = 30.0
+# Some analytical endpoints (cwv-distribution, geo-breakdown) run heavy
+# uncached queries that can take 15-30s+ on a cold cache, so allow headroom.
+DEFAULT_TIMEOUT = 60.0
 
 
 class HttpArchiveError(RuntimeError):

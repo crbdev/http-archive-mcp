@@ -18,6 +18,7 @@ Tools (read-only, no auth):
   alternatives_for           - other technologies in the same category as X
 
   get_cwv                    - Core Web Vitals (LCP/CLS/INP/TTFB) over time
+  get_cwv_distribution       - share of sites passing CWV at one date (good/NI/poor)
   get_lighthouse             - Lighthouse scores over time
   get_page_weight            - median page weight (total/JS/images) over time
   get_audits                 - Lighthouse audit pass rates over time
@@ -112,14 +113,21 @@ def list_categories(name_only: bool = True) -> Any:
 
 @mcp.tool()
 @_safe
-def list_technologies(category: str | None = None, name_only: bool = True) -> Any:
+def list_technologies(
+    category: str | None = None,
+    name_only: bool = True,
+    fields: str | None = None,
+) -> Any:
     """List technologies, optionally filtered to one category.
 
     Args:
         category: category name (e.g. "Live chat", "CMS", "WordPress plugins")
         name_only: if True (default), return just names.
+        fields: comma-separated columns to include when name_only is False —
+                e.g. "technology,category,description,origins,icon". Pass "icon"
+                to pull each technology's logo URL (useful for write-ups/sites).
     """
-    return client.technologies(category=category, onlyname=name_only)
+    return client.technologies(category=category, onlyname=name_only, fields=fields)
 
 
 @mcp.tool()
@@ -354,6 +362,37 @@ def get_cwv(
 ) -> Any:
     """Core Web Vitals (LCP, CLS, INP, TTFB) over time for a technology."""
     return client.cwv(technology=technology, rank=rank, geo=geo, start=start, end=end)
+
+
+@mcp.tool()
+@_safe
+def get_cwv_distribution(
+    technology: str,
+    date: str,
+    rank: str = "ALL",
+    geo: str = DEFAULT_GEO,
+) -> Any:
+    """Core Web Vitals distribution histogram for a technology at one date.
+
+    Unlike `get_cwv` (median metrics over time), this returns per-bucket
+    histograms — the count of origins whose p75 falls in each LCP/INP/CLS/
+    FCP/TTFB bucket — so you can compute the *share of sites passing* CWV.
+    Ideal for head-to-head snapshots (e.g. "% of Shopify vs WooCommerce
+    sites passing Core Web Vitals").
+
+    Args:
+        technology: exact technology name (e.g. "WordPress"); the API also
+            accepts a comma-separated list (e.g. "Wix,WordPress").
+        date: ISO month YYYY-MM-DD (e.g. "2026-02-01") — required; a
+            point-in-time snapshot, not a series. This report lags the raw
+            crawl, so the most recent month or two may return [].
+        rank: NUMERIC rank ceiling as a string — e.g. "100000" (top 100k),
+            "10000" (top 10k). This endpoint is the exception: it does NOT
+            accept the "Top 1M" bucket names other tools use (those return
+            zero rows). Default "ALL" = all ranks.
+        geo: country / region, default "ALL" (e.g. "United States of America").
+    """
+    return client.cwv_distribution(technology=technology, date=date, rank=rank, geo=geo)
 
 
 @mcp.tool()
