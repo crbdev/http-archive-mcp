@@ -39,7 +39,7 @@ No auth required. All data is public and read-only, served by `https://cdn.httpa
 Requires [`uv`](https://docs.astral.sh/uv/).
 
 ```sh
-git clone https://github.com/crbdev/http-archive-mcp.git
+git clone https://github.com/aglarondai/http-archive-mcp.git
 cd http-archive-mcp
 uv sync
 ```
